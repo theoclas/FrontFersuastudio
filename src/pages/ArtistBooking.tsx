@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { getArtistBySlug, submitBooking } from '../services/api';
+import { submitBooking, getEventsByArtist } from '../services/api';
 import type { Artist } from '../types';
 import './ArtistBooking.css';
 
@@ -70,8 +70,7 @@ const ARTIST_FALLBACKS: Record<string, ExtendedArtistInfo> = {
       { date: '16 NOV', place: 'Paramount Records x Nakai Rooftop' },
       { date: '27 NOV', place: 'Viuz' },
       { date: '29 NOV', place: 'Grooveland x La terraza.deepink' },
-      { date: '30 NOV', place: 'Sonorama' },
-      { date: 'Disponible', place: 'Abrir nueva fecha', bookLink: 'https://wa.me/573505209860' }
+      { date: '30 NOV', place: 'Sonorama' }
     ]
   },
   'diann-makinne': {
@@ -111,6 +110,7 @@ export default function ArtistBooking() {
   const [activeTab, setActiveTab] = useState<'photos' | 'presskit'>('photos');
   const [bookingStatus, setBookingStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [formData, setFormData] = useState({ name: '', email: '', date: '', city: '', message: '' });
+  const [dbEvents, setDbEvents] = useState<any[]>([]);
 
   // Data
   const fbData = slug ? ARTIST_FALLBACKS[slug] : null;
@@ -119,6 +119,12 @@ export default function ArtistBooking() {
 
   useEffect(() => {
     window.scrollTo(0, 0);
+    if (slug) {
+      getEventsByArtist(slug).then(data => {
+        // Filter out cancelled events for public view
+        setDbEvents(data.filter((e: any) => e.status !== 'CANCELLED'));
+      }).catch(err => console.error(err));
+    }
   }, [slug]);
 
   if (!fbData) {
@@ -159,6 +165,14 @@ export default function ArtistBooking() {
   };
 
   const mainImage = coverImg || '';
+  
+  const showsToShow = dbEvents.length > 0 
+    ? dbEvents.map(e => ({
+        date: new Date(e.date).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' }).toUpperCase(),
+        place: `${e.venue}, ${e.city}`,
+        bookLink: e.ticketUrl,
+     }))
+    : fbData.shows || [];
 
   return (
     <div className="booking-page-wrapper">
@@ -172,7 +186,7 @@ export default function ArtistBooking() {
           </div>
           <div className="booking-nav-links">
             {fbData.members && fbData.members.length > 0 && <a href="#artistas">Artistas</a>}
-            {(fbData.shows && fbData.shows.length > 0) && <a href="#fechas">Fechas</a>}
+            {showsToShow.length > 0 && <a href="#fechas">Fechas</a>}
             <a href="#booking">Solicitud</a>
           </div>
         </nav>
@@ -323,7 +337,7 @@ export default function ArtistBooking() {
             <div className="sec-sub">Agenda actual y espacios abiertos para nuevas reservas.</div>
             
             <div className="shows-list">
-              {fbData.shows?.map((s, i) => (
+              {showsToShow.map((s, i) => (
                 <div key={i} className="show-item">
                   <div className="show-date">{s.date}</div>
                   <div className="show-place">{s.place}</div>
@@ -334,6 +348,17 @@ export default function ArtistBooking() {
                   </div>
                 </div>
               ))}
+              
+              {/* Opción disponible siempre */}
+              <div className="show-item" style={{ borderTop: '1px solid rgba(255,255,255,0.05)', marginTop: 8, paddingTop: 16 }}>
+                  <div className="show-date" style={{ color: 'var(--accent)' }}>Disponible</div>
+                  <div className="show-place">Abrir nueva fecha en tu ciudad</div>
+                  <div className="show-cta">
+                    <a href={`https://wa.me/${fbData.whatsapp || '573505209860'}`} target="_blank" rel="noopener noreferrer">
+                      Reservar
+                    </a>
+                  </div>
+              </div>
             </div>
 
             <p className="shows-note">

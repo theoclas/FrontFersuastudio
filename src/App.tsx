@@ -4,6 +4,7 @@ import Home from './pages/Home';
 import ArtistBooking from './pages/ArtistBooking';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
+import ArtistDashboard from './pages/ArtistDashboard';
 import ProtectedRoute from './components/ProtectedRoute';
 
 // Error Boundary so that backend errors in one page don't blank the whole app
@@ -41,6 +42,7 @@ function App() {
           {/* Rutas Privadas / Dashboard */}
           <Route element={<ProtectedRoute />}>
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/dashboard/:slug" element={<ArtistDashboard />} />
           </Route>
 
           {/* Página dinámica de booking por artista (Ej: /macfly-mikebran, /diann-makinne) */}

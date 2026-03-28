@@ -57,6 +57,7 @@ export default function Dashboard() {
                     </span>
                   </div>
                   <button 
+                    onClick={() => navigate(`/dashboard/${artist.slug}`)}
                     style={{ 
                       marginTop: 'auto', 
                       background: 'var(--bg-soft)', 

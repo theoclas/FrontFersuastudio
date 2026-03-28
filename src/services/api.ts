@@ -38,4 +38,20 @@ export const submitBooking = async (bookingData: any): Promise<any> => {
   return data;
 };
 
+// Events Management
+export const getEventsByArtist = async (slug: string): Promise<any[]> => {
+  const { data } = await api.get(`/events?artist=${slug}`);
+  return data;
+};
+
+export const createEvent = async (eventData: any): Promise<any> => {
+  const { data } = await api.post('/events', eventData);
+  return data;
+};
+
+export const deleteEvent = async (id: string): Promise<any> => {
+  const { data } = await api.delete(`/events/${id}`);
+  return data;
+};
+
 export default api;

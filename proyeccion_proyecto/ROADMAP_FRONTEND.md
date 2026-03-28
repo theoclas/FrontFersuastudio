@@ -11,9 +11,9 @@ Este documento detalla los siguientes pasos necesarios en el Frontend (React) pa
 Crear un módulo interno (`/dashboard`) donde los artistas puedan gestionar su perfil post-login.
 
 ### Módulo de "Mis Fechas" (Eventos)
-- [ ] **Vista de Agenda:** Tabla o grid donde el artista vea sus fechas actuales obtenidas desde el backend.
-- [ ] **Formulario Crear/Editar Fecha:** Inputs para ingresar ciudad, lugar (venue), fecha exacta y link de compra de tickets. Al guardar, debe llamar al endpoint `POST /events` o `PUT /events/:id`.
-- [ ] **Sincronización:** Una vez añadida la fecha, esta debe reflejarse instantáneamente en la página pública del artista (`/artist-slug`).
+- [x] **Vista de Agenda:** Tabla o grid donde el artista vea sus fechas actuales obtenidas desde el backend.
+- [x] **Formulario Crear/Editar Fecha:** Inputs para ingresar ciudad, lugar (venue), fecha exacta y link de compra de tickets. Al guardar, debe llamar al endpoint `POST /events` o `PUT /events/:id`.
+- [x] **Sincronización:** Una vez añadida la fecha, esta debe reflejarse instantáneamente en la página pública del artista (`/artist-slug`).
 
 ### Módulo de Perfil y Rider (Specs)
 - [ ] **Editor de Biografía:** Formulario para que el artista actualice su descripción.
