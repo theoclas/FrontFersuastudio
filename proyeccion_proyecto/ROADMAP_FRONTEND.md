@@ -17,12 +17,11 @@ Crear un módulo interno (`/dashboard`) donde los artistas puedan gestionar su p
 
 ### Módulo de Perfil y Rider (Specs)
 - [x] **Editor de Biografía:** Formulario para que el artista actualice su descripción.
-- [ ] **Redes y Spotify:** Campos para actualizar links de Instagram, SoundCloud, Spotify Embeds.
+- [x] **Redes y Spotify:** Campos para actualizar links de Instagram, SoundCloud, Spotify Embeds.
 - [x] **Tecnología y Rider:** Editor simple donde añaden qué equipos necesitan (Mixer, CDJs).
 
 ### Módulo de Galería (Imágenes)
-Actualmente, las imágenes son levantadas del disco local (`assets/artists/...`). En el futuro, idealmente, los artistas subirán fotos:
-- [ ] **Uploader de Fotos:** Formulario `multipart/form-data` para enviar imágenes al backend, que las procesará y guardará en BD o S3.
+- [x] **Uploader de Fotos:** Formulario `multipart/form-data` para enviar imágenes al backend, que las procesará y guardará en BD o S3.
 
 ## 3. Integración Dinámica del Perfil Público
-- [ ] **Mejorar ArtistBooking.tsx:** La interfaz clonada ya está lista y espectacular, ahora solo falta asegurar que _toda_ la data (miembros del dúo, strings del rider, links sociales, galería subida) venga del fetch `getArtistBySlug(slug)` en lugar de caer al fallback estático interno del código.
+- [x] **Mejorar ArtistBooking.tsx:** La interfaz clonada ya está lista y espectacular, ahora toda la data (rider, links sociales, galería subida) viene del fetch `getArtistBySlug(slug)` priorizando el backend sobre los fallbacks.
