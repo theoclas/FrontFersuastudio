@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Plus, Trash2, Calendar as CalIcon, Eye, EyeOff, Save, Settings, Share2, Image as ImageIcon, Upload } from 'lucide-react';
-import { getArtistBySlug, getEventsByArtist, createEvent, deleteEvent, updateEvent, updateArtistProfile, addSpec, deleteSpec, addSocial, deleteSocial, uploadPhoto, deletePhoto } from '../services/api';
+import { getArtistBySlug, getEventsByArtist, createEvent, deleteEvent, updateEvent, updateArtistProfile, addSpec, deleteSpec, addSocial, deleteSocial, uploadPhoto, deletePhoto, uploadCover } from '../services/api';
 
 export default function ArtistDashboard() {
   const { slug } = useParams<{ slug: string }>();
@@ -45,6 +45,7 @@ export default function ArtistDashboard() {
 
   // Gallery
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const [isUploadingCover, setIsUploadingCover] = useState(false);
 
   useEffect(() => {
     if (isAuthorized) {
@@ -199,6 +200,21 @@ export default function ArtistDashboard() {
     }
   };
 
+  const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsUploadingCover(true);
+    try {
+      await uploadCover(slug || '', file);
+      alert('Foto de portada actualizada exitosamente.');
+      await loadData();
+    } catch (err) {
+      alert('Error subiendo foto de portada.');
+    } finally {
+      setIsUploadingCover(false);
+    }
+  };
+
   if (!isAuthorized) {
     return (
       <div style={{ padding: '40px', color: 'white', textAlign: 'center' }}>
@@ -275,6 +291,20 @@ export default function ArtistDashboard() {
         {activeTab === 'profile' && (
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 30 }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 30 }}>
+               {/* Cover Image */}
+               <div style={{ background: 'var(--bg-soft)', padding: 24, borderRadius: 16 }}>
+                  <h3 style={{ marginBottom: 20, display: 'flex', gap: 8 }}><ImageIcon size={20} color="var(--accent-blue)" /> Foto de Portada</h3>
+                  {profile?.coverImage ? (
+                    <img src={`${API_BASE}${profile.coverImage}`} alt="Cover" style={{ width: '100%', height: 160, objectFit: 'cover', borderRadius: 8, marginBottom: 16 }} />
+                  ) : (
+                    <div style={{ width: '100%', height: 160, background: 'rgba(0,0,0,0.3)', borderRadius: 8, marginBottom: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0.5, fontSize: 13 }}>Mostrando default de disco</div>
+                  )}
+                  <label style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', background: 'rgba(255,255,255,0.1)', color: 'white', fontWeight: 'bold', padding: 12, borderRadius: 8, cursor: 'pointer' }}>
+                    {isUploadingCover ? 'Subiendo...' : 'Cambiar Foto Principal'}
+                    <input type="file" hidden accept="image/*" onChange={handleCoverUpload} disabled={isUploadingCover} />
+                  </label>
+               </div>
+
                <div style={{ background: 'var(--bg-soft)', padding: 24, borderRadius: 16 }}>
                   <h3 style={{ marginBottom: 20, display: 'flex', gap: 8 }}><Settings size={20} color="var(--accent-blue)" /> Información Pública</h3>
                   <form onSubmit={handleUpdateProfile} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>

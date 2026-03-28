@@ -170,8 +170,8 @@ export default function ArtistBooking() {
     }
   };
 
-  const mainImage = coverImg || '';
   const API_BASE = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:3000';
+  const mainImage = dbArtist?.coverImage ? `${API_BASE}${dbArtist.coverImage}` : coverImg || '';
   
   const dynamicPhotos = dbArtist?.photos?.map((ph: any) => `${API_BASE}${ph.url}`) || [];
   const finalGalleryImgs = dynamicPhotos.length > 0 ? dynamicPhotos : galleryImgs;

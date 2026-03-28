@@ -99,4 +99,13 @@ export const deletePhoto = async (slug: string, photoId: number): Promise<any> =
   return data;
 };
 
+export const uploadCover = async (slug: string, file: File): Promise<any> => {
+  const formData = new FormData();
+  formData.append('file', file);
+  const { data } = await api.post(`/artists/${slug}/cover`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return data;
+};
+
 export default api;

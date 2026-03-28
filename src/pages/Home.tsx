@@ -138,6 +138,9 @@ export default function Home() {
               const tagline = (artist as any).tagline || staticRef?.tagline || 'Electronic Music';
               const genres = artist.genres?.length > 0 ? artist.genres : (staticRef?.genres || []);
 
+              const API_BASE = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:3000';
+              const coverUrl = artist.coverImage ? `${API_BASE}${artist.coverImage}` : COVER_BY_SLUG[artist.slug] || '';
+
               return (
                 <motion.div
                   key={artist.id}
@@ -149,8 +152,9 @@ export default function Home() {
                     {/* Background Image: BD → local por slug → vacío */}
                     <div
                       className="card-bg"
-                      style={{ backgroundImage: `url(${artist.coverImage || COVER_BY_SLUG[artist.slug] || ''})` }}
+                      style={{ backgroundImage: `url(${coverUrl})` }}
                     />
+
 
                     {/* Gradient Overlay */}
                     <div className="card-overlay" />
