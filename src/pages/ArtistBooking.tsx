@@ -171,7 +171,11 @@ export default function ArtistBooking() {
   };
 
   const mainImage = coverImg || '';
+  const API_BASE = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:3000';
   
+  const dynamicPhotos = dbArtist?.photos?.map((ph: any) => `${API_BASE}${ph.url}`) || [];
+  const finalGalleryImgs = dynamicPhotos.length > 0 ? dynamicPhotos : galleryImgs;
+
   const showsToShow = dbEvents.length > 0 
     ? dbEvents.map(e => ({
         date: new Date(e.date).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' }).toUpperCase(),
@@ -188,6 +192,7 @@ export default function ArtistBooking() {
   const membersList = fbData?.members || [];
   const genresList = dbArtist?.genres?.length > 0 ? dbArtist.genres : fbData?.genres || [];
   const specsList = dbArtist?.specs?.length > 0 ? dbArtist.specs.map((s: any) => s.label) : fbData?.specsStringList || [];
+  const socialsList = dbArtist?.socials?.length > 0 ? dbArtist.socials : [];
 
   return (
     <div className="booking-page-wrapper">
@@ -216,6 +221,15 @@ export default function ArtistBooking() {
             <div className="hero-genres">
               {genresList.map((g: any) => (
                 <span key={g.name} className="hero-chip">{g.name}</span>
+              ))}
+            </div>
+
+            <div className="hero-socials" style={{ display: 'flex', gap: 15, margin: '20px 0', flexWrap: 'wrap' }}>
+              {socialsList.map((soc: any) => (
+                <a key={soc.id} href={soc.url} target="_blank" rel="noopener noreferrer" 
+                  style={{ color: 'white', fontSize: '13px', textDecoration: 'none', opacity: 0.8, textTransform: 'capitalize', borderBottom: '1px solid rgba(255,255,255,0.2)' }}>
+                  {soc.label || soc.platform}
+                </a>
               ))}
             </div>
 
@@ -277,8 +291,8 @@ export default function ArtistBooking() {
             <div className="media-inner is-visible" data-tab="photos">
               <div className="sec-title">Galería</div>
               <div className="media-grid">
-                {galleryImgs.length > 0 ? (
-                  galleryImgs.map((imgUrl, i) => (
+                {finalGalleryImgs.length > 0 ? (
+                  finalGalleryImgs.map((imgUrl: string, i: number) => (
                     <figure key={i} className="media-item">
                       <img src={imgUrl} alt={`Promo photo ${i}`} />
                     </figure>

@@ -16,9 +16,9 @@ Crear un módulo interno (`/dashboard`) donde los artistas puedan gestionar su p
 - [x] **Sincronización:** Una vez añadida la fecha, esta debe reflejarse instantáneamente en la página pública del artista (`/artist-slug`).
 
 ### Módulo de Perfil y Rider (Specs)
-- [ ] **Editor de Biografía:** Formulario para que el artista actualice su descripción.
+- [x] **Editor de Biografía:** Formulario para que el artista actualice su descripción.
 - [ ] **Redes y Spotify:** Campos para actualizar links de Instagram, SoundCloud, Spotify Embeds.
-- [ ] **Tecnología y Rider:** Editor simple donde añaden qué equipos necesitan (Mixer, CDJs).
+- [x] **Tecnología y Rider:** Editor simple donde añaden qué equipos necesitan (Mixer, CDJs).
 
 ### Módulo de Galería (Imágenes)
 Actualmente, las imágenes son levantadas del disco local (`assets/artists/...`). En el futuro, idealmente, los artistas subirán fotos:

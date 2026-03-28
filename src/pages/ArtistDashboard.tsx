@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Plus, Trash2, Calendar as CalIcon, MapPin, Eye, EyeOff, Save, Settings } from 'lucide-react';
-import { getArtistBySlug, getEventsByArtist, createEvent, deleteEvent, updateEvent, updateArtistProfile, addSpec, deleteSpec } from '../services/api';
+import { ArrowLeft, Plus, Trash2, Calendar as CalIcon, Eye, EyeOff, Save, Settings, Share2, Image as ImageIcon, Upload } from 'lucide-react';
+import { getArtistBySlug, getEventsByArtist, createEvent, deleteEvent, updateEvent, updateArtistProfile, addSpec, deleteSpec, addSocial, deleteSocial, uploadPhoto, deletePhoto } from '../services/api';
 
 export default function ArtistDashboard() {
   const { slug } = useParams<{ slug: string }>();
@@ -11,16 +11,16 @@ export default function ArtistDashboard() {
   const artistSummary = user?.artists?.find((a: any) => a.slug === slug);
   const isAuthorized = !!artistSummary;
 
-  const [activeTab, setActiveTab] = useState<'events' | 'profile'>('events');
+  const [activeTab, setActiveTab] = useState<'events' | 'profile' | 'gallery'>('events');
 
   // Data Loading States
   const [events, setEvents] = useState<any[]>([]);
   const [profile, setProfile] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
 
   // Profile Forms
   const [bio, setBio] = useState('');
   const [tagline, setTagline] = useState('');
+  const [whatsapp, setWhatsapp] = useState('');
   const [isSubmittingProfile, setIsSubmittingProfile] = useState(false);
 
   // Event Forms
@@ -37,11 +37,18 @@ export default function ArtistDashboard() {
   const [specCategory] = useState('Equipamiento');
   const [isSubmittingSpec, setIsSubmittingSpec] = useState(false);
 
+  // Social Forms
+  const [socialPlatform, setSocialPlatform] = useState('instagram');
+  const [socialUrl, setSocialUrl] = useState('');
+  const [socialLabel, setSocialLabel] = useState('');
+  const [isSubmittingSocial, setIsSubmittingSocial] = useState(false);
+
+  // Gallery
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+
   useEffect(() => {
     if (isAuthorized) {
       loadData();
-    } else {
-      setLoading(false);
     }
   }, [slug, isAuthorized]);
 
@@ -55,14 +62,13 @@ export default function ArtistDashboard() {
       setProfile(art);
       setBio(art.bio || '');
       setTagline(art.tagline || '');
+      setWhatsapp(art.whatsapp || '');
     } catch (err) {
       console.error('Error fetching data:', err);
-    } finally {
-      setLoading(false);
     }
   };
 
-  // --- EVENTS HANDLERS ---
+  // --- EVENTS ---
   const handleCreateEvent = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title || !date || !time || !venue || !city) return;
@@ -73,7 +79,7 @@ export default function ArtistDashboard() {
       setTitle(''); setDate(''); setTime(''); setVenue(''); setCity(''); setTicketUrl('');
       await loadData();
     } catch (err) {
-      alert('Hubo un error al crear la fecha.');
+      alert('Error al crear fecha.');
     } finally {
       setIsSubmittingEvent(false);
     }
@@ -86,12 +92,12 @@ export default function ArtistDashboard() {
       await updateEvent(id, { status: newStatus });
       await loadData();
     } catch (err) {
-      alert('Error cambiando el estado de la fecha.');
+      alert('Error cambiando el estado.');
     }
   };
 
   const handleDeleteEvent = async (id: string) => {
-    if (!window.confirm('¿Estás seguro de ELIMINAR definitivamente esta fecha de la base de datos? Esta acción no se puede deshacer.')) return;
+    if (!window.confirm('¿ELIMINAR definitivamente de la base de datos?')) return;
     try {
       await deleteEvent(id);
       await loadData();
@@ -100,23 +106,22 @@ export default function ArtistDashboard() {
     }
   };
 
-  // --- PROFILE HANDLERS ---
+  // --- PROFILE ---
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmittingProfile(true);
     try {
-      await updateArtistProfile(slug || '', { bio, tagline });
-      alert('Perfil actualizado correctamente');
+      await updateArtistProfile(slug || '', { bio, tagline, whatsapp });
+      alert('Perfil actualizado');
       await loadData();
     } catch (err) {
-      console.error(err);
-      alert('Error al actualizar el perfil');
+      alert('Error actualizando perfil');
     } finally {
       setIsSubmittingProfile(false);
     }
   };
 
-  // --- SPECS HANDLERS ---
+  // --- SPECS ---
   const handleAddSpec = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!specLabel) return;
@@ -126,21 +131,71 @@ export default function ArtistDashboard() {
       setSpecLabel('');
       await loadData();
     } catch (err) {
-      console.error(err);
-      alert('Error al agregar el spec al rider.');
+      alert('Error agregando equipo.');
     } finally {
       setIsSubmittingSpec(false);
     }
   };
 
   const handleDeleteSpec = async (specId: number) => {
-    if (!window.confirm('¿Eliminar este equipo del rider?')) return;
+    if (!window.confirm('¿Quitar equipo del rider?')) return;
     try {
       await deleteSpec(slug || '', specId);
       await loadData();
     } catch (err) {
-      console.error(err);
-      alert('Error al eliminar spec');
+      alert('Error eliminando equipo.');
+    }
+  };
+
+  // --- SOCIALS ---
+  const handleAddSocial = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!socialUrl) return;
+    setIsSubmittingSocial(true);
+    try {
+      await addSocial(slug || '', { platform: socialPlatform, url: socialUrl, label: socialLabel || undefined });
+      setSocialUrl('');
+      setSocialLabel('');
+      await loadData();
+    } catch (err) {
+      alert('Error agregando red social.');
+    } finally {
+      setIsSubmittingSocial(false);
+    }
+  };
+
+  const handleDeleteSocial = async (socialId: number) => {
+    if (!window.confirm('¿Eliminar red social?')) return;
+    try {
+      await deleteSocial(slug || '', socialId);
+      await loadData();
+    } catch (err) {
+      alert('Error eliminando red social.');
+    }
+  };
+
+  // --- GALLERY ---
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsUploadingPhoto(true);
+    try {
+      await uploadPhoto(slug || '', file);
+      await loadData();
+    } catch (err) {
+      alert('Error subiendo foto.');
+    } finally {
+      setIsUploadingPhoto(false);
+    }
+  };
+
+  const handleDeletePhoto = async (photoId: number) => {
+    if (!window.confirm('¿Eliminar esta foto de la galería?')) return;
+    try {
+      await deletePhoto(slug || '', photoId);
+      await loadData();
+    } catch (err) {
+      alert('Error eliminando foto.');
     }
   };
 
@@ -148,11 +203,13 @@ export default function ArtistDashboard() {
     return (
       <div style={{ padding: '40px', color: 'white', textAlign: 'center' }}>
         <h2>No autorizado</h2>
-        <p>No tienes asignado este artista o no existe.</p>
-        <Link to="/dashboard" style={{ color: 'var(--accent-blue)', textDecoration: 'underline' }}>Volver al Panel</Link>
+        <Link to="/dashboard" style={{ color: 'var(--accent-blue)' }}>Volver</Link>
       </div>
     );
   }
+
+  // Define API Root for images
+  const API_BASE = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:3000';
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg-main)', color: 'white', padding: '40px 20px' }}>
@@ -160,181 +217,133 @@ export default function ArtistDashboard() {
         
         {/* Header */}
         <div style={{ display: 'flex', gap: 16, alignItems: 'center', marginBottom: 20 }}>
-          <Link to="/dashboard" style={{ color: 'white', opacity: 0.7, textDecoration: 'none', display: 'flex', alignItems: 'center' }}>
-            <ArrowLeft size={24} />
-          </Link>
-          <div>
-            <h1 style={{ fontSize: '28px', fontWeight: 'bold' }}>Gestionar {artistSummary.name}</h1>
-          </div>
+          <Link to="/dashboard" style={{ color: 'white', opacity: 0.7 }}><ArrowLeft size={24} /></Link>
+          <h1 style={{ fontSize: '28px', fontWeight: 'bold' }}>Gestionar {artistSummary.name}</h1>
         </div>
 
         {/* Tabs */}
         <div style={{ display: 'flex', gap: 20, marginBottom: 40, borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: 10 }}>
-          <button 
-            onClick={() => setActiveTab('events')}
-            style={{ 
-              background: 'transparent', border: 'none', color: activeTab === 'events' ? 'var(--accent-orange)' : 'white', 
-              opacity: activeTab === 'events' ? 1 : 0.6, fontSize: 16, fontWeight: activeTab === 'events' ? 'bold' : 'normal', cursor: 'pointer',
-              display: 'flex', alignItems: 'center', gap: 8 
-            }}>
-            <CalIcon size={18} /> Fechas y Eventos
+          <button onClick={() => setActiveTab('events')} style={{ background: 'transparent', border: 'none', color: activeTab === 'events' ? 'var(--accent-orange)' : 'white', opacity: activeTab === 'events' ? 1 : 0.6, fontSize: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <CalIcon size={18} /> Fechas
           </button>
-          <button 
-            onClick={() => setActiveTab('profile')}
-            style={{ 
-              background: 'transparent', border: 'none', color: activeTab === 'profile' ? 'var(--accent-blue)' : 'white', 
-              opacity: activeTab === 'profile' ? 1 : 0.6, fontSize: 16, fontWeight: activeTab === 'profile' ? 'bold' : 'normal', cursor: 'pointer',
-              display: 'flex', alignItems: 'center', gap: 8 
-            }}>
+          <button onClick={() => setActiveTab('profile')} style={{ background: 'transparent', border: 'none', color: activeTab === 'profile' ? 'var(--accent-blue)' : 'white', opacity: activeTab === 'profile' ? 1 : 0.6, fontSize: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}>
             <Settings size={18} /> Perfil y Rider
+          </button>
+          <button onClick={() => setActiveTab('gallery')} style={{ background: 'transparent', border: 'none', color: activeTab === 'gallery' ? '#a855f7' : 'white', opacity: activeTab === 'gallery' ? 1 : 0.6, fontSize: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <ImageIcon size={18} /> Galería
           </button>
         </div>
 
-        {/* ================= EVENTS TAB ================= */}
+        {/* EVENTS TAB */}
         {activeTab === 'events' && (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 30, alignItems: 'start' }}>
-            {/* Formulario Crear Evento */}
-            <div style={{ background: 'var(--bg-soft)', border: '1px solid rgba(255,255,255,0.05)', padding: 24, borderRadius: 16 }}>
-              <h3 style={{ fontSize: 18, marginBottom: 20, display: 'flex', gap: 8, alignItems: 'center' }}>
-                <Plus size={20} color="var(--accent-orange)" /> Nueva Fecha
-              </h3>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 30 }}>
+            <div style={{ background: 'var(--bg-soft)', padding: 24, borderRadius: 16 }}>
+              <h3 style={{ marginBottom: 20, display: 'flex', gap: 8 }}><Plus size={20} color="var(--accent-orange)" /> Nueva Fecha</h3>
               <form onSubmit={handleCreateEvent} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: 12, marginBottom: 6, opacity: 0.7 }}>Título del Show</label>
-                  <input required type="text" value={title} onChange={e => setTitle(e.target.value)} placeholder="Ej: Feriado Closing Party" 
-                    style={{ width: '100%', padding: '10px 12px', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', borderRadius: 8 }} />
-                </div>
+                <input required type="text" value={title} onChange={e => setTitle(e.target.value)} placeholder="Título Show" style={{ width: '100%', padding: 10, background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', borderRadius: 8 }} />
                 <div style={{ display: 'flex', gap: 10 }}>
-                  <div style={{ flex: 1 }}>
-                    <label style={{ display: 'block', fontSize: 12, marginBottom: 6, opacity: 0.7 }}>Fecha</label>
-                    <input required type="date" value={date} onChange={e => setDate(e.target.value)} 
-                      style={{ width: '100%', padding: '10px 12px', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', borderRadius: 8 }} />
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <label style={{ display: 'block', fontSize: 12, marginBottom: 6, opacity: 0.7 }}>Hora</label>
-                    <input required type="time" value={time} onChange={e => setTime(e.target.value)} 
-                      style={{ width: '100%', padding: '10px 12px', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', borderRadius: 8 }} />
-                  </div>
+                  <input required type="date" value={date} onChange={e => setDate(e.target.value)} style={{ flex: 1, padding: 10, background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', borderRadius: 8 }} />
+                  <input required type="time" value={time} onChange={e => setTime(e.target.value)} style={{ flex: 1, padding: 10, background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', borderRadius: 8 }} />
                 </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: 12, marginBottom: 6, opacity: 0.7 }}>Lugar (Venue)</label>
-                  <input required type="text" value={venue} onChange={e => setVenue(e.target.value)} placeholder="Ej: Club Vertigo" 
-                    style={{ width: '100%', padding: '10px 12px', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', borderRadius: 8 }} />
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: 12, marginBottom: 6, opacity: 0.7 }}>Ciudad, País</label>
-                  <input required type="text" value={city} onChange={e => setCity(e.target.value)} placeholder="Ej: Bogotá, CO" 
-                    style={{ width: '100%', padding: '10px 12px', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', borderRadius: 8 }} />
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: 12, marginBottom: 6, opacity: 0.7 }}>URL Tickets (Opcional)</label>
-                  <input type="url" value={ticketUrl} onChange={e => setTicketUrl(e.target.value)} placeholder="https://..." 
-                    style={{ width: '100%', padding: '10px 12px', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', borderRadius: 8 }} />
-                </div>
-                <button disabled={isSubmittingEvent} style={{ background: 'var(--accent-orange)', color: 'black', fontWeight: 'bold', padding: 12, borderRadius: 8, border: 'none', cursor: 'pointer', marginTop: 10 }}>
-                  {isSubmittingEvent ? 'Guardando...' : 'Añadir Fecha'}
-                </button>
+                <input required type="text" value={venue} onChange={e => setVenue(e.target.value)} placeholder="Lugar (Venue)" style={{ width: '100%', padding: 10, background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', borderRadius: 8 }} />
+                <input required type="text" value={city} onChange={e => setCity(e.target.value)} placeholder="Ciudad, País" style={{ width: '100%', padding: 10, background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', borderRadius: 8 }} />
+                <input type="url" value={ticketUrl} onChange={e => setTicketUrl(e.target.value)} placeholder="URL Tickets" style={{ width: '100%', padding: 10, background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', borderRadius: 8 }} />
+                <button disabled={isSubmittingEvent} style={{ background: 'var(--accent-orange)', color: 'black', fontWeight: 'bold', padding: 12, borderRadius: 8, border: 'none', cursor: 'pointer' }}>{isSubmittingEvent ? 'Añadiendo...' : 'Añadir Fecha'}</button>
               </form>
             </div>
-
-            {/* Event List */}
-            <div style={{ background: 'var(--bg-elevated)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 16, overflow: 'hidden' }}>
-              <div style={{ padding: '20px 24px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                <h3 style={{ fontSize: 18, fontWeight: 'bold' }}>Fechas e Historial</h3>
-              </div>
-              <div style={{ padding: 24 }}>
-                {loading ? <p>Cargando fechas...</p> : events.length === 0 ? <p style={{ color: 'var(--text-muted)' }}>No hay fechas registradas.</p> : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                    {events.map((ev) => (
-                      <div key={ev.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.03)', padding: 16, borderRadius: 12 }}>
-                        <div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                            <span style={{ fontWeight: 600, fontSize: 15, color: ev.status === 'CANCELLED' ? '#ffaa00' : 'white', opacity: ev.status === 'CANCELLED' ? 0.7 : 1 }}>{ev.title}</span>
-                            {ev.status === 'CANCELLED' && <span style={{ fontSize: 10, background: 'rgba(255,170,0,0.2)', color: '#ffaa00', padding: '2px 6px', borderRadius: 4 }}>OCULTO</span>}
-                          </div>
-                          <div style={{ display: 'flex', gap: 12, color: 'var(--text-muted)', fontSize: 12, alignItems: 'center', opacity: ev.status === 'CANCELLED' ? 0.7 : 1 }}>
-                            <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><CalIcon size={12} /> {new Date(ev.date).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
-                            <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><MapPin size={12} /> {ev.venue}, {ev.city}</span>
-                          </div>
-                        </div>
-                        <div style={{ display: 'flex', gap: 8 }}>
-                          <button onClick={() => handleToggleEventStatus(ev.id, ev.status)} style={{ background: 'transparent', border: 'none', color: ev.status === 'CANCELLED' ? 'var(--accent-blue)' : '#ffaa00', cursor: 'pointer', opacity: 0.8 }} title={ev.status === 'CANCELLED' ? 'Republicar' : 'Ocultar'}>
-                            {ev.status === 'CANCELLED' ? <Eye size={18} /> : <EyeOff size={18} />}
-                          </button>
-                          <button onClick={() => handleDeleteEvent(ev.id)} style={{ background: 'transparent', border: 'none', color: '#ff6b6b', cursor: 'pointer', opacity: 0.8 }} title="Eliminar definitivamente">
-                            <Trash2 size={18} />
-                          </button>
-                        </div>
-                      </div>
-                    ))}
+            <div style={{ background: 'var(--bg-elevated)', borderRadius: 16, padding: 24 }}>
+              <h3 style={{ marginBottom: 20 }}>Listado</h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {events.map((ev) => (
+                  <div key={ev.id} style={{ display: 'flex', justifyContent: 'space-between', background: 'rgba(255,255,255,0.03)', padding: 16, borderRadius: 12 }}>
+                    <div>
+                       <div style={{ fontWeight: 600 }}>{ev.title} {ev.status === 'CANCELLED' && <span style={{ color: '#ffaa00', fontSize: 10 }}>(OCULTO)</span>}</div>
+                       <div style={{ fontSize: 12, opacity: 0.6 }}>{ev.venue}, {ev.city} • {new Date(ev.date).toLocaleDateString()}</div>
+                    </div>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                       <button onClick={() => handleToggleEventStatus(ev.id, ev.status)} style={{ background: 'transparent', border: 'none', color: ev.status === 'CANCELLED' ? '#3b82f6' : '#ffaa00', cursor: 'pointer' }}>{ev.status === 'CANCELLED' ? <Eye size={18} /> : <EyeOff size={18} />}</button>
+                       <button onClick={() => handleDeleteEvent(ev.id)} style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer' }}><Trash2 size={18} /></button>
+                    </div>
                   </div>
-                )}
+                ))}
               </div>
             </div>
           </div>
         )}
 
-        {/* ================= PROFILE & RIDER TAB ================= */}
+        {/* PROFILE TAB */}
         {activeTab === 'profile' && (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 30, alignItems: 'start' }}>
-            
-            {/* Editar Perfil */}
-            <div style={{ background: 'var(--bg-soft)', border: '1px solid rgba(255,255,255,0.05)', padding: 24, borderRadius: 16 }}>
-              <h3 style={{ fontSize: 18, marginBottom: 20, display: 'flex', gap: 8, alignItems: 'center' }}>
-                <Settings size={20} color="var(--accent-blue)" /> Información Pública
-              </h3>
-              <form onSubmit={handleUpdateProfile} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: 12, marginBottom: 6, opacity: 0.7 }}>Tagline / Subtítulo</label>
-                  <input required type="text" value={tagline} onChange={e => setTagline(e.target.value)} placeholder="Ej: DJs · Productores · Electrónica" 
-                    style={{ width: '100%', padding: '10px 12px', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', borderRadius: 8 }} />
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: 12, marginBottom: 6, opacity: 0.7 }}>Biografía (Perfil y Presskit)</label>
-                  <textarea required value={bio} onChange={e => setBio(e.target.value)} rows={6}
-                    style={{ width: '100%', padding: '10px 12px', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', borderRadius: 8, resize: 'vertical' }} />
-                </div>
-                <button disabled={isSubmittingProfile} style={{ background: 'var(--accent-blue)', color: 'black', fontWeight: 'bold', padding: 12, borderRadius: 8, border: 'none', cursor: 'pointer', marginTop: 10, display: 'flex', gap: 8, justifyContent: 'center', alignItems: 'center' }}>
-                  <Save size={18} /> {isSubmittingProfile ? 'Guardando...' : 'Guardar Perfil'}
-                </button>
-              </form>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 30 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 30 }}>
+               <div style={{ background: 'var(--bg-soft)', padding: 24, borderRadius: 16 }}>
+                  <h3 style={{ marginBottom: 20, display: 'flex', gap: 8 }}><Settings size={20} color="var(--accent-blue)" /> Información Pública</h3>
+                  <form onSubmit={handleUpdateProfile} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                    <input required value={tagline} onChange={e => setTagline(e.target.value)} placeholder="Tagline" style={{ width: '100%', padding: 10, background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', borderRadius: 8 }} />
+                    <input value={whatsapp} onChange={e => setWhatsapp(e.target.value)} placeholder="WhatsApp (57...)" style={{ width: '100%', padding: 10, background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', borderRadius: 8 }} />
+                    <textarea required value={bio} onChange={e => setBio(e.target.value)} rows={5} placeholder="Biografía" style={{ width: '100%', padding: 10, background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', borderRadius: 8 }} />
+                    <button disabled={isSubmittingProfile} style={{ background: 'var(--accent-blue)', color: 'black', fontWeight: 'bold', padding: 12, borderRadius: 8, border: 'none', cursor: 'pointer' }}><Save size={18} /> {isSubmittingProfile ? 'Guardando...' : 'Guardar Perfil'}</button>
+                  </form>
+               </div>
+               <div style={{ background: 'var(--bg-soft)', padding: 24, borderRadius: 16 }}>
+                  <h3 style={{ marginBottom: 20, display: 'flex', gap: 8 }}><Share2 size={20} color="var(--accent-orange)" /> Redes Sociales</h3>
+                  <form onSubmit={handleAddSocial} style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
+                    <select value={socialPlatform} onChange={e => setSocialPlatform(e.target.value)} style={{ flex: 1, padding: 10, background: 'rgba(0,0,0,0.2)', color: 'white', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8 }}>
+                      <option value="instagram">IG</option><option value="soundcloud">SC</option><option value="spotify">Spotify</option><option value="youtube">YT</option>
+                    </select>
+                    <input required value={socialUrl} onChange={e => setSocialUrl(e.target.value)} placeholder="https://..." style={{ flex: 2, padding: 10, background: 'rgba(0,0,0,0.2)', color: 'white', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8 }} />
+                    <button disabled={isSubmittingSocial} style={{ background: 'white', color: 'black', padding: '0 12px', borderRadius: 8, border: 'none' }}>+</button>
+                  </form>
+                  {profile?.socials?.map((soc: any) => (
+                    <div key={soc.id} style={{ display: 'flex', justifyContent: 'space-between', background: 'rgba(255,255,255,0.03)', padding: '8px 12px', borderRadius: 8, marginBottom: 6 }}>
+                      <span style={{ fontSize: 13 }}>{soc.platform}: {soc.url}</span>
+                      <button onClick={() => handleDeleteSocial(soc.id)} style={{ color: '#ef4444', background: 'none', border: 'none' }}><Trash2 size={14} /></button>
+                    </div>
+                  ))}
+               </div>
             </div>
-
-            {/* Rider Técnico */}
-            <div style={{ background: 'var(--bg-elevated)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 16, overflow: 'hidden' }}>
-              <div style={{ padding: '20px 24px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                <h3 style={{ fontSize: 18, fontWeight: 'bold' }}>Rider Técnico (Specs)</h3>
-                <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>Equipos que requiere el artista para su presentación.</p>
-              </div>
-              
-              <div style={{ padding: 24, borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                <form onSubmit={handleAddSpec} style={{ display: 'flex', gap: 12 }}>
-                  <div style={{ flex: 1 }}>
-                    <input required type="text" value={specLabel} onChange={e => setSpecLabel(e.target.value)} placeholder="Ej: CDJ 3000..." 
-                      style={{ width: '100%', padding: '10px 12px', background: 'var(--bg-main)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', borderRadius: 8 }} />
-                  </div>
-                  <button disabled={isSubmittingSpec} style={{ background: 'white', color: 'black', fontWeight: 'bold', padding: '0 16px', borderRadius: 8, border: 'none', cursor: 'pointer' }}>
-                    Añadir
+            <div style={{ background: 'var(--bg-elevated)', padding: 24, borderRadius: 16 }}>
+               <h3 style={{ marginBottom: 20 }}>Rider Técnico</h3>
+               <form onSubmit={handleAddSpec} style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
+                  <input required value={specLabel} onChange={e => setSpecLabel(e.target.value)} placeholder="Ej: Mixer DJM V10" style={{ flex: 1, padding: 10, background: 'rgba(0,0,0,0.2)', color: 'white', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8 }} />
+                  <button disabled={isSubmittingSpec} style={{ background: 'white', color: 'black', padding: '0 12px', borderRadius: 8, border: 'none' }}>
+                    {isSubmittingSpec ? '...' : '+'}
                   </button>
-                </form>
-              </div>
-
-              <div style={{ padding: 24 }}>
-                {loading || !profile ? <p>Cargando specs...</p> : profile.specs?.length === 0 ? <p style={{ color: 'var(--text-muted)' }}>Rider técnico vacío.</p> : (
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
-                    {profile.specs.map((sp: any) => (
-                      <div key={sp.id} style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(255,255,255,0.1)', padding: '6px 12px', borderRadius: 20 }}>
-                        <span style={{ fontSize: 14 }}>{sp.label}</span>
-                        <button onClick={() => handleDeleteSpec(sp.id)} style={{ background: 'transparent', border: 'none', color: '#ff6b6b', cursor: 'pointer', padding: 0, display: 'flex' }} title="Quitar equipo">
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+               </form>
+               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                  {profile?.specs?.map((s: any) => (
+                    <div key={s.id} style={{ background: 'rgba(255,255,255,0.1)', padding: '6px 12px', borderRadius: 20, fontSize: 13, display: 'flex', gap: 8, alignItems: 'center' }}>
+                      {s.label} <Trash2 size={12} style={{ cursor: 'pointer', color: '#ef4444' }} onClick={() => handleDeleteSpec(s.id)} />
+                    </div>
+                  ))}
+               </div>
             </div>
+          </div>
+        )}
 
+        {/* GALLERY TAB */}
+        {activeTab === 'gallery' && (
+          <div style={{ background: 'var(--bg-elevated)', borderRadius: 16, padding: 24 }}>
+             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 30 }}>
+                <h3 style={{ display: 'flex', gap: 8, alignItems: 'center' }}><ImageIcon size={20} color="#a855f7" /> Galería de Fotos</h3>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#a855f7', color: 'white', padding: '10px 20px', borderRadius: 8, cursor: 'pointer', fontWeight: 'bold' }}>
+                  <Upload size={18} /> {isUploadingPhoto ? 'Subiendo...' : 'Subir Imagen'}
+                  <input type="file" hidden accept="image/*" onChange={handlePhotoUpload} disabled={isUploadingPhoto} />
+                </label>
+             </div>
+             
+             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 20 }}>
+                {profile?.photos?.map((ph: any) => (
+                  <div key={ph.id} style={{ position: 'relative', borderRadius: 12, overflow: 'hidden', aspectRatio: '4/3', border: '1px solid rgba(255,255,255,0.1)' }}>
+                    <img src={`${API_BASE}${ph.url}`} alt="Artist" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <button onClick={() => handleDeletePhoto(ph.id)} style={{ position: 'absolute', top: 10, right: 10, background: 'rgba(239, 68, 68, 0.8)', color: 'white', border: 'none', padding: 8, borderRadius: '50%', cursor: 'pointer' }}>
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                ))}
+                {(!profile?.photos || profile.photos.length === 0) && (
+                  <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '40px 0', opacity: 0.5 }}>No hay fotos dinámicas. (Se muestran fallbacks del disco en la landing pública)</div>
+                )}
+             </div>
           </div>
         )}
 

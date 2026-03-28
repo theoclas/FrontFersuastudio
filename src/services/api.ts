@@ -75,4 +75,28 @@ export const deleteSpec = async (slug: string, specId: number): Promise<any> => 
   return data;
 };
 
+export const addSocial = async (slug: string, socialData: any): Promise<any> => {
+  const { data } = await api.post(`/artists/${slug}/socials`, socialData);
+  return data;
+};
+
+export const deleteSocial = async (slug: string, socialId: number): Promise<any> => {
+  const { data } = await api.delete(`/artists/${slug}/socials/${socialId}`);
+  return data;
+};
+
+export const uploadPhoto = async (slug: string, file: File): Promise<any> => {
+  const formData = new FormData();
+  formData.append('file', file);
+  const { data } = await api.post(`/artists/${slug}/photos`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return data;
+};
+
+export const deletePhoto = async (slug: string, photoId: number): Promise<any> => {
+  const { data } = await api.delete(`/artists/${slug}/photos/${photoId}`);
+  return data;
+};
+
 export default api;
