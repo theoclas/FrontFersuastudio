@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { submitBooking, getEventsByArtist } from '../services/api';
+import { submitBooking, getEventsByArtist, getArtistBySlug } from '../services/api';
 import type { Artist } from '../types';
 import './ArtistBooking.css';
 
@@ -111,6 +111,7 @@ export default function ArtistBooking() {
   const [bookingStatus, setBookingStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [formData, setFormData] = useState({ name: '', email: '', date: '', city: '', message: '' });
   const [dbEvents, setDbEvents] = useState<any[]>([]);
+  const [dbArtist, setDbArtist] = useState<any>(null);
 
   // Data
   const fbData = slug ? ARTIST_FALLBACKS[slug] : null;
@@ -124,10 +125,14 @@ export default function ArtistBooking() {
         // Filter out cancelled events for public view
         setDbEvents(data.filter((e: any) => e.status !== 'CANCELLED'));
       }).catch(err => console.error(err));
+      
+      getArtistBySlug(slug).then(data => {
+        setDbArtist(data);
+      }).catch(err => console.error(err));
     }
   }, [slug]);
 
-  if (!fbData) {
+  if (!fbData && !dbArtist) {
     return (
       <div className="booking-page-wrapper">
         <div className="booking-shell">
@@ -147,18 +152,19 @@ export default function ArtistBooking() {
     setBookingStatus('loading');
     
     // Original WA behavior
-    const wNum = fbData.whatsapp || '573505209860';
+    const targetWa = dbArtist?.whatsapp || fbData?.whatsapp || '573505209860';
     const textMsg = `Solicitud de booking%0A%0ANombre: ${formData.name}%0AEmail: ${formData.email}%0AFecha: ${formData.date}%0ACiudad: ${formData.city}%0ADetalles: ${formData.message}`;
     
     // Simulate API call and redirect
     try {
-      if (fbData.id) await submitBooking({ ...formData, eventType: 'club', phone: '', eventCity: formData.city, eventDate: formData.date, artistId: fbData.id });
-      window.open(`https://wa.me/${wNum}?text=${textMsg}`, '_blank');
+      const artId = dbArtist?.id || fbData?.id;
+      if (artId) await submitBooking({ ...formData, eventType: 'club', phone: '', eventCity: formData.city, eventDate: formData.date, artistId: artId });
+      window.open(`https://wa.me/${targetWa}?text=${textMsg}`, '_blank');
       setBookingStatus('success');
       setFormData({ name: '', email: '', date: '', city: '', message: '' });
       setTimeout(() => setBookingStatus('idle'), 5000);
     } catch {
-      window.open(`https://wa.me/${wNum}?text=${textMsg}`, '_blank');
+      window.open(`https://wa.me/${targetWa}?text=${textMsg}`, '_blank');
       setBookingStatus('success');
       setTimeout(() => setBookingStatus('idle'), 5000);
     }
@@ -172,7 +178,16 @@ export default function ArtistBooking() {
         place: `${e.venue}, ${e.city}`,
         bookLink: e.ticketUrl,
      }))
-    : fbData.shows || [];
+    : fbData?.shows || [];
+
+  // Derived Info (DB preferred, fallback to HTML hardcode)
+  const artistName = dbArtist?.name || fbData?.name;
+  const artistTagline = dbArtist?.tagline || fbData?.tagline;
+  const artistBio = dbArtist?.bio || fbData?.bio;
+  const artistWa = dbArtist?.whatsapp || fbData?.whatsapp || '573505209860';
+  const membersList = fbData?.members || [];
+  const genresList = dbArtist?.genres?.length > 0 ? dbArtist.genres : fbData?.genres || [];
+  const specsList = dbArtist?.specs?.length > 0 ? dbArtist.specs.map((s: any) => s.label) : fbData?.specsStringList || [];
 
   return (
     <div className="booking-page-wrapper">
@@ -181,11 +196,11 @@ export default function ArtistBooking() {
         {/* NAV */}
         <nav className="booking-nav">
           <div className="booking-nav-left">
-            <Link to="/" className="booking-brand">{fbData.name}</Link>
+            <Link to="/" className="booking-brand">{artistName}</Link>
             <div className="booking-nav-tag">Booking</div>
           </div>
           <div className="booking-nav-links">
-            {fbData.members && fbData.members.length > 0 && <a href="#artistas">Artistas</a>}
+            {membersList.length > 0 && <a href="#artistas">Artistas</a>}
             {showsToShow.length > 0 && <a href="#fechas">Fechas</a>}
             <a href="#booking">Solicitud</a>
           </div>
@@ -195,11 +210,11 @@ export default function ArtistBooking() {
         <header className="booking-hero">
           <div className="hero-left">
             <div className="hero-label">DJs</div>
-            <h1 className="hero-title">{fbData.tagline}</h1>
-            <p className="hero-sub">{fbData.bio}</p>
+            <h1 className="hero-title">{artistTagline}</h1>
+            <p className="hero-sub" style={{ whiteSpace: 'pre-wrap' }}>{artistBio}</p>
 
             <div className="hero-genres">
-              {fbData.genres?.map(g => (
+              {genresList.map((g: any) => (
                 <span key={g.name} className="hero-chip">{g.name}</span>
               ))}
             </div>
@@ -207,7 +222,7 @@ export default function ArtistBooking() {
             <div className="hero-cta">
               <a 
                 className="booking-btn booking-btn-primary" 
-                href={`https://wa.me/${fbData.whatsapp || '573505209860'}?text=Hola%20quiero%20cotizar%20booking`} 
+                href={`https://wa.me/${artistWa}?text=Hola%20quiero%20cotizar%20booking`} 
                 target="_blank" rel="noopener noreferrer"
               >
                 WhatsApp Booking
@@ -218,7 +233,7 @@ export default function ArtistBooking() {
 
           <div className="hero-right">
             <div className="hero-photo">
-              {mainImage && <img src={mainImage} alt={fbData.name} />}
+              {mainImage && <img src={mainImage} alt={artistName} />}
               <div className="hero-photo-caption">
                 <span>Live club show</span>
                 <span>2024 / 2025</span>
@@ -280,7 +295,7 @@ export default function ArtistBooking() {
             <div className="media-inner is-visible" data-tab="presskit">
               <div className="sec-title">Rider Técnico</div>
               <div className="media-grid">
-                {fbData.specsStringList?.map((spec, i) => (
+                {specsList.map((spec: string, i: number) => (
                   <figure key={i} className="media-item2">
                     <b>{spec}</b>
                   </figure>
@@ -295,13 +310,13 @@ export default function ArtistBooking() {
         <div className="booking-section-grid">
           
           {/* ARTISTAS (INDIVIDUALES) */}
-          {fbData.members && fbData.members.length > 0 ? (
+          {membersList.length > 0 ? (
             <section id="artistas" className="booking-section">
               <div className="sec-title">Artistas</div>
               <div className="sec-sub">Bookea a cada DJ por separado o el show completo.</div>
 
               <div className="artists-list">
-                {fbData.members.map((member, i) => (
+                {membersList.map((member: any, i: number) => (
                   <article key={i} className="booking-artist-card">
                     <div className="booking-artist-photo">
                       {member.photo ? (
@@ -342,7 +357,7 @@ export default function ArtistBooking() {
                   <div className="show-date">{s.date}</div>
                   <div className="show-place">{s.place}</div>
                   <div className="show-cta">
-                    <a href={s.bookLink || `https://wa.me/${fbData.whatsapp || '573505209860'}`} target="_blank" rel="noopener noreferrer">
+                    <a href={s.bookLink || `https://wa.me/${fbData?.whatsapp || '573505209860'}`} target="_blank" rel="noopener noreferrer">
                       {s.date === 'Disponible' ? 'Reservar' : 'Book'}
                     </a>
                   </div>
@@ -354,7 +369,7 @@ export default function ArtistBooking() {
                   <div className="show-date" style={{ color: 'var(--accent)' }}>Disponible</div>
                   <div className="show-place">Abrir nueva fecha en tu ciudad</div>
                   <div className="show-cta">
-                    <a href={`https://wa.me/${fbData.whatsapp || '573505209860'}`} target="_blank" rel="noopener noreferrer">
+                    <a href={`https://wa.me/${fbData?.whatsapp || '573505209860'}`} target="_blank" rel="noopener noreferrer">
                       Reservar
                     </a>
                   </div>
@@ -394,7 +409,7 @@ export default function ArtistBooking() {
                 {bookingStatus === 'loading' ? 'Enviando...' : 'Enviar solicitud'}
               </button>
 
-              <a className="booking-btn booking-btn-secondary" href={`https://wa.me/${fbData.whatsapp || '573505209860'}?text=Hola,%20quiero%20cotizar%20booking`} target="_blank" rel="noopener noreferrer">
+              <a className="booking-btn booking-btn-secondary" href={`https://wa.me/${fbData?.whatsapp || '573505209860'}?text=Hola,%20quiero%20cotizar%20booking`} target="_blank" rel="noopener noreferrer">
                 Hablar por WhatsApp
               </a>
             </div>
@@ -409,7 +424,7 @@ export default function ArtistBooking() {
         </section>
 
         <div className="booking-footer-text">
-          © {new Date().getFullYear()} {fbData.name} — Booking
+          © {new Date().getFullYear()} {fbData?.name} — Booking
         </div>
 
       </div>

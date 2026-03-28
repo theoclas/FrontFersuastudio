@@ -59,4 +59,20 @@ export const deleteEvent = async (id: string): Promise<any> => {
   return data;
 };
 
+// Profile & Rider
+export const updateArtistProfile = async (slug: string, profileData: any): Promise<any> => {
+  const { data } = await api.patch(`/artists/${slug}`, profileData);
+  return data;
+};
+
+export const addSpec = async (slug: string, specData: any): Promise<any> => {
+  const { data } = await api.post(`/artists/${slug}/specs`, specData);
+  return data;
+};
+
+export const deleteSpec = async (slug: string, specId: number): Promise<any> => {
+  const { data } = await api.delete(`/artists/${slug}/specs/${specId}`);
+  return data;
+};
+
 export default api;
