@@ -49,6 +49,11 @@ export const createEvent = async (eventData: any): Promise<any> => {
   return data;
 };
 
+export const updateEvent = async (id: string, eventData: any): Promise<any> => {
+  const { data } = await api.patch(`/events/${id}`, eventData);
+  return data;
+};
+
 export const deleteEvent = async (id: string): Promise<any> => {
   const { data } = await api.delete(`/events/${id}`);
   return data;

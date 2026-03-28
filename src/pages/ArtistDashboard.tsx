@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Plus, Trash2, Calendar as CalIcon, MapPin } from 'lucide-react';
-import { getEventsByArtist, createEvent, deleteEvent } from '../services/api';
+import { ArrowLeft, Plus, Trash2, Calendar as CalIcon, MapPin, Eye, EyeOff } from 'lucide-react';
+import { getEventsByArtist, createEvent, deleteEvent, updateEvent } from '../services/api';
 
 export default function ArtistDashboard() {
   const { slug } = useParams<{ slug: string }>();
@@ -73,8 +73,20 @@ export default function ArtistDashboard() {
     }
   };
 
+  const handleToggleStatus = async (id: string, currentStatus: string) => {
+    const newStatus = currentStatus === 'CANCELLED' ? 'UPCOMING' : 'CANCELLED';
+    if (!window.confirm(`¿Estás seguro de ${newStatus === 'CANCELLED' ? 'ocultar' : 'publicar'} esta fecha en la página web?`)) return;
+    try {
+      await updateEvent(id, { status: newStatus });
+      await fetchEvents();
+    } catch (err) {
+      console.error('Error updating event:', err);
+      alert('Error cambiando el estado de la fecha.');
+    }
+  };
+
   const handleDelete = async (id: string) => {
-    if (!window.confirm('¿Estás seguro de cancelar esta fecha? Se marcará como CANCELLED o se borrará.')) return;
+    if (!window.confirm('¿Estás seguro de ELIMINAR definitivamente esta fecha de la base de datos? Esta acción no se puede deshacer.')) return;
     try {
       await deleteEvent(id);
       await fetchEvents();
@@ -158,7 +170,7 @@ export default function ArtistDashboard() {
               <button disabled={isSubmitting} style={{ background: 'var(--accent-orange)', color: 'black', fontWeight: 'bold', padding: 12, borderRadius: 8, border: 'none', cursor: 'pointer', marginTop: 10 }}>
                 {isSubmitting ? 'Guardando...' : 'Añadir Fecha'}
               </button>
-            </form>
+             </form>
           </div>
 
           {/* Tabla de Fechas */}
@@ -178,17 +190,30 @@ export default function ArtistDashboard() {
                     <div key={ev.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.03)', padding: 16, borderRadius: 12 }}>
                       <div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                          <span style={{ fontWeight: 600, fontSize: 15, color: ev.status === 'CANCELLED' ? 'red' : 'white' }}>{ev.title}</span>
-                          {ev.status === 'CANCELLED' && <span style={{ fontSize: 10, background: 'rgba(255,0,0,0.2)', color: 'red', padding: '2px 6px', borderRadius: 4 }}>CANCELADO</span>}
+                          <span style={{ fontWeight: 600, fontSize: 15, color: ev.status === 'CANCELLED' ? '#ffaa00' : 'white', opacity: ev.status === 'CANCELLED' ? 0.7 : 1 }}>{ev.title}</span>
+                          {ev.status === 'CANCELLED' && <span style={{ fontSize: 10, background: 'rgba(255,170,0,0.2)', color: '#ffaa00', padding: '2px 6px', borderRadius: 4 }}>OCULTO</span>}
                         </div>
-                        <div style={{ display: 'flex', gap: 12, color: 'var(--text-muted)', fontSize: 12, alignItems: 'center' }}>
+                        <div style={{ display: 'flex', gap: 12, color: 'var(--text-muted)', fontSize: 12, alignItems: 'center', opacity: ev.status === 'CANCELLED' ? 0.7 : 1 }}>
                           <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><CalIcon size={12} /> {new Date(ev.date).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
                           <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><MapPin size={12} /> {ev.venue}, {ev.city}</span>
                         </div>
                       </div>
-                      <button onClick={() => handleDelete(ev.id)} style={{ background: 'transparent', border: 'none', color: '#ff6b6b', cursor: 'pointer', opacity: 0.8 }} title="Cancelar evento">
-                        <Trash2 size={18} />
-                      </button>
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        <button 
+                          onClick={() => handleToggleStatus(ev.id, ev.status)} 
+                          style={{ background: 'transparent', border: 'none', color: ev.status === 'CANCELLED' ? 'var(--accent-blue)' : '#ffaa00', cursor: 'pointer', opacity: 0.8 }} 
+                          title={ev.status === 'CANCELLED' ? 'Volver a publicar' : 'Ocultar fecha de la página'}
+                        >
+                          {ev.status === 'CANCELLED' ? <Eye size={18} /> : <EyeOff size={18} />}
+                        </button>
+                        <button 
+                          onClick={() => handleDelete(ev.id)} 
+                          style={{ background: 'transparent', border: 'none', color: '#ff6b6b', cursor: 'pointer', opacity: 0.8 }} 
+                          title="Eliminar definitivamente"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
