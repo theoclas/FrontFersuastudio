@@ -1,0 +1,441 @@
+/* ═══════════════════════════════════════════
+   HOME — Mobile-First Design
+   Primary: phone screens | Secondary: desktop
+═══════════════════════════════════════════ */
+
+/* ── Wrapper ─────────────────────────────── */
+.home-wrapper {
+  min-height: 100vh;
+  background: var(--bg-main);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* ── Navbar ──────────────────────────────── */
+.home-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  height: 60px;
+  background: rgba(2, 4, 10, 0.82);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 700;
+  font-size: 1.1rem;
+  letter-spacing: 0.02em;
+  color: var(--text-main);
+}
+
+.nav-icon {
+  color: var(--accent-cyan);
+  animation: spin-slow 8s linear infinite;
+}
+
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+.nav-login-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 16px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+  letter-spacing: 0.03em;
+}
+
+.nav-login-btn:hover,
+.nav-login-btn:active {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-main);
+  border-color: rgba(255, 255, 255, 0.22);
+}
+
+/* ── Hero ────────────────────────────────── */
+.home-hero {
+  padding: 100px 24px 32px;
+  text-align: center;
+  position: relative;
+}
+
+/* Ambient glow orbs */
+.hero-bg-orbs {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.35;
+}
+
+.orb-1 {
+  width: 320px;
+  height: 320px;
+  background: var(--accent-purple);
+  top: -80px;
+  left: -60px;
+}
+
+.orb-2 {
+  width: 260px;
+  height: 260px;
+  background: var(--accent-pink);
+  top: 60px;
+  right: -80px;
+}
+
+.hero-content {
+  position: relative;
+  z-index: 2;
+}
+
+.hero-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.7rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent-cyan);
+  font-weight: 600;
+  margin-bottom: 18px;
+  padding: 5px 14px;
+  border: 1px solid rgba(0, 245, 255, 0.22);
+  border-radius: 999px;
+  background: rgba(0, 245, 255, 0.06);
+}
+
+.hero-title {
+  font-size: clamp(2.1rem, 9vw, 4rem);
+  line-height: 1.13;
+  margin-bottom: 14px;
+  color: var(--text-main);
+  font-weight: 800;
+}
+
+.hero-highlight {
+  background: var(--primary-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.hero-desc {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  max-width: 320px;
+  margin: 0 auto;
+  line-height: 1.65;
+}
+
+/* ── Artists Section ─────────────────────── */
+.artists-section {
+  padding: 8px 16px 44px;
+  flex: 1;
+}
+
+.section-label {
+  font-size: 0.68rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.3);
+  font-weight: 600;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.artists-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* ── Artist Card ─────────────────────────── */
+.artist-card {
+  position: relative;
+  display: block;
+  border-radius: 22px;
+  overflow: hidden;
+  height: 260px;
+  text-decoration: none;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  cursor: pointer;
+  /* Tap feedback on mobile */
+  -webkit-tap-highlight-color: transparent;
+}
+
+.artist-card:active {
+  transform: scale(0.975);
+}
+
+/* Background photo */
+.card-bg {
+  position: absolute;
+  inset: -4px;
+  background-size: cover;
+  background-position: center top;
+  transition: transform 0.55s ease;
+}
+
+.artist-card:hover .card-bg {
+  transform: scale(1.06);
+}
+
+/* Dark gradient overlay (bottom-heavy for text legibility) */
+.card-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    165deg,
+    rgba(2, 4, 10, 0.2) 0%,
+    rgba(2, 4, 10, 0.55) 40%,
+    rgba(2, 4, 10, 0.92) 100%
+  );
+}
+
+/* Colored glow at the bottom edge */
+.card-glow {
+  position: absolute;
+  bottom: -30px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80%;
+  height: 80px;
+  border-radius: 50%;
+  filter: blur(30px);
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+/* Card content layout */
+.card-content {
+  position: relative;
+  z-index: 3;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 16px 18px;
+}
+
+/* Genre pills — top */
+.card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.genre-pill {
+  font-size: 0.6rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 4px 10px;
+}
+
+/* Bottom info */
+.card-bottom {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.card-name {
+  font-size: clamp(1.45rem, 5.5vw, 2.1rem);
+  font-weight: 800;
+  color: #ffffff;
+  line-height: 1.1;
+  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.6);
+  letter-spacing: 0.01em;
+}
+
+.card-tagline {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.5);
+  letter-spacing: 0.04em;
+  margin-bottom: 10px;
+}
+
+.card-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  padding: 8px 16px;
+  width: fit-content;
+  letter-spacing: 0.03em;
+  transition: background 0.2s;
+}
+
+.artist-card:hover .card-cta,
+.artist-card:active .card-cta {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+/* ── Loading ─────────────────────────────── */
+.loading-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  padding: 60px 0;
+}
+
+.loading-ring {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid rgba(0, 245, 255, 0.2);
+  border-top-color: var(--accent-cyan);
+  animation: spin 0.9s linear infinite;
+  display: block;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Footer ──────────────────────────────── */
+.home-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 18px 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.22);
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+}
+
+.footer-logo {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.35);
+  letter-spacing: 0.04em;
+}
+
+.footer-dot {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.18);
+}
+
+/* ══════════════════════════════════════════
+   TABLET — 640px +
+══════════════════════════════════════════ */
+@media (min-width: 640px) {
+  .home-hero {
+    padding: 120px 40px 40px;
+  }
+
+  .hero-title {
+    font-size: 3rem;
+  }
+
+  .hero-desc {
+    max-width: 420px;
+  }
+
+  .artists-section {
+    padding: 12px 32px 60px;
+  }
+
+  .artist-card {
+    height: 300px;
+  }
+}
+
+/* ══════════════════════════════════════════
+   DESKTOP — 900px +
+══════════════════════════════════════════ */
+@media (min-width: 900px) {
+  .home-hero {
+    padding: 140px 60px 50px;
+  }
+
+  .hero-title {
+    font-size: 3.8rem;
+  }
+
+  .hero-desc {
+    font-size: 1.05rem;
+    max-width: 500px;
+  }
+
+  .artists-section {
+    padding: 20px 60px 80px;
+    max-width: 1100px;
+    margin: 0 auto;
+    width: 100%;
+  }
+
+  .artists-grid {
+    flex-direction: row;
+    gap: 20px;
+  }
+
+  .artist-card {
+    height: 420px;
+    flex: 1;
+  }
+
+  .card-name {
+    font-size: 2rem;
+  }
+
+  .nav-login-btn {
+    font-size: 0.88rem;
+    padding: 8px 20px;
+  }
+}
+
+/* ══════════════════════════════════════════
+   LARGE DESKTOP — 1400px +
+══════════════════════════════════════════ */
+@media (min-width: 1400px) {
+  .artist-card {
+    height: 500px;
+  }
+}
