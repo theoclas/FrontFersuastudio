@@ -1,17 +1,25 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, Plus, Trash2, Calendar as CalIcon, Eye, EyeOff, Save, Settings, Share2, Image as ImageIcon, Upload } from 'lucide-react';
-import { getArtistBySlug, getEventsByArtist, createEvent, deleteEvent, updateEvent, updateArtistProfile, addSpec, deleteSpec, addSocial, deleteSocial, uploadPhoto, deletePhoto, uploadCover } from '../services/api';
+import { getArtistBySlug, getEventsByArtist, createEvent, deleteEvent, updateEvent, updateArtistProfile, addSpec, deleteSpec, addSocial, deleteSocial, uploadPhoto, deletePhoto, uploadCover, addGenre, deleteGenre } from '../services/api';
 
 export default function ArtistDashboard() {
   const { slug } = useParams<{ slug: string }>();
-  
+  const [searchParams] = useSearchParams();
+
   const userStr = localStorage.getItem('user');
   const user = userStr ? JSON.parse(userStr) : null;
   const artistSummary = user?.artists?.find((a: any) => a.slug === slug);
-  const isAuthorized = !!artistSummary;
+  const isAuthorized = user?.role === 'ADMIN' || !!artistSummary;
 
   const [activeTab, setActiveTab] = useState<'events' | 'profile' | 'gallery'>('events');
+
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab === 'gallery' || tab === 'profile' || tab === 'events') {
+      setActiveTab(tab);
+    }
+  }, [searchParams]);
 
   // Data Loading States
   const [events, setEvents] = useState<any[]>([]);
@@ -42,6 +50,10 @@ export default function ArtistDashboard() {
   const [socialUrl, setSocialUrl] = useState('');
   const [socialLabel, setSocialLabel] = useState('');
   const [isSubmittingSocial, setIsSubmittingSocial] = useState(false);
+
+  // Genre Forms
+  const [genreName, setGenreName] = useState('');
+  const [isSubmittingGenre, setIsSubmittingGenre] = useState(false);
 
   // Gallery
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
@@ -172,6 +184,32 @@ export default function ArtistDashboard() {
       await loadData();
     } catch (err) {
       alert('Error eliminando red social.');
+    }
+  };
+
+  // --- GENRES ---
+  const handleAddGenre = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!genreName) return;
+    setIsSubmittingGenre(true);
+    try {
+      await addGenre(slug || '', { name: genreName });
+      setGenreName('');
+      await loadData();
+    } catch (err) {
+      alert('Error agregando género musical.');
+    } finally {
+      setIsSubmittingGenre(false);
+    }
+  };
+
+  const handleDeleteGenre = async (genreId: number) => {
+    if (!window.confirm('¿Eliminar género musical?')) return;
+    try {
+      await deleteGenre(slug || '', genreId);
+      await loadData();
+    } catch (err) {
+      alert('Error eliminando género.');
     }
   };
 
@@ -347,12 +385,32 @@ export default function ArtistDashboard() {
                   ))}
                </div>
             </div>
+
+            <div style={{ background: 'var(--bg-elevated)', padding: 24, borderRadius: 16 }}>
+               <h3 style={{ marginBottom: 20, display: 'flex', alignItems: 'center', gap: 8 }}><span style={{ color: '#ec4899' }}>♫</span> Etiquetas / Géneros Musicales</h3>
+               <form onSubmit={handleAddGenre} style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
+                  <input required value={genreName} onChange={e => setGenreName(e.target.value)} placeholder="Ej: Tech House" style={{ flex: 1, padding: 10, background: 'rgba(0,0,0,0.2)', color: 'white', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8 }} />
+                  <button disabled={isSubmittingGenre} style={{ background: '#ec4899', color: 'white', fontWeight: 'bold', padding: '0 12px', borderRadius: 8, border: 'none' }}>
+                    {isSubmittingGenre ? '...' : '+ Añadir'}
+                  </button>
+               </form>
+               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+                  {profile?.genres?.map((g: any) => (
+                    <div key={g.id} style={{ background: 'rgba(236, 72, 153, 0.15)', color: '#fbcfe8', border: '1px solid rgba(236, 72, 153, 0.3)', padding: '6px 14px', borderRadius: 20, fontSize: 13, display: 'flex', gap: 8, alignItems: 'center' }}>
+                      {g.name} <Trash2 size={12} style={{ cursor: 'pointer', color: '#f472b6' }} onClick={() => handleDeleteGenre(g.id)} />
+                    </div>
+                  ))}
+               </div>
+            </div>
           </div>
         )}
 
         {/* GALLERY TAB */}
         {activeTab === 'gallery' && (
           <div style={{ background: 'var(--bg-elevated)', borderRadius: 16, padding: 24 }}>
+             <p style={{ color: 'var(--text-muted)', fontSize: 13, marginBottom: 16, lineHeight: 1.5 }}>
+               Formatos permitidos: JPEG, PNG, WebP o GIF. Tamaño máximo por archivo: 8&nbsp;MB. Las imágenes se sirven desde el API; en producción configura <code style={{ fontSize: 12 }}>VITE_API_URL</code> al dominio del backend.
+             </p>
              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 30 }}>
                 <h3 style={{ display: 'flex', gap: 8, alignItems: 'center' }}><ImageIcon size={20} color="#a855f7" /> Galería de Fotos</h3>
                 <label style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#a855f7', color: 'white', padding: '10px 20px', borderRadius: 8, cursor: 'pointer', fontWeight: 'bold' }}>

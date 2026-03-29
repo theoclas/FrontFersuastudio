@@ -4,6 +4,7 @@ import Home from './pages/Home';
 import ArtistBooking from './pages/ArtistBooking';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
+import AdminUsers from './pages/AdminUsers';
 import ArtistDashboard from './pages/ArtistDashboard';
 import ProtectedRoute from './components/ProtectedRoute';
 
@@ -42,6 +43,7 @@ function App() {
           {/* Rutas Privadas / Dashboard */}
           <Route element={<ProtectedRoute />}>
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/dashboard/admin/users" element={<AdminUsers />} />
             <Route path="/dashboard/:slug" element={<ArtistDashboard />} />
           </Route>
 

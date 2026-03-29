@@ -166,9 +166,9 @@ export default function Home() {
                     <div className="card-content">
                       {/* Top: genre tags */}
                       <div className="card-tags">
-                        {genres.slice(0, 3).map((g) => (
+                        {genres.map((g: any) => (
                           <span
-                            key={g.name}
+                            key={g.id || g.name}
                             className="genre-pill"
                             style={{
                               background: accent.tag,

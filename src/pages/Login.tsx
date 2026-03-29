@@ -1,36 +1,65 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Mail, Lock, User, ArrowRight, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { loginAdmin } from '../services/api';
+import { getRegistrationOpen, loginAdmin, registerPublic } from '../services/api';
 import './Login.css';
 
 const Login: React.FC = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({ name: '', email: '', password: '' });
   const [error, setError] = useState('');
+  const [info, setInfo] = useState('');
   const [loading, setLoading] = useState(false);
+  const [registrationOpen, setRegistrationOpen] = useState(false);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const { publicRegistrationEnabled } = await getRegistrationOpen();
+        if (!cancelled) setRegistrationOpen(!!publicRegistrationEnabled);
+      } catch {
+        if (!cancelled) setRegistrationOpen(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setInfo('');
     setLoading(true);
 
     try {
       if (isLogin) {
         const response = await loginAdmin({ email: formData.email, password: formData.password });
-        // Guardar token y user
         localStorage.setItem('token', response.access_token);
         localStorage.setItem('user', JSON.stringify(response.user));
-        
-        // Redirigir al panel de control
         navigate('/dashboard');
       } else {
-        setError('El registro público está deshabilitado. Contacta al administrador.');
+        const response = await registerPublic({
+          email: formData.email,
+          password: formData.password,
+          name: formData.name,
+        });
+        if (response.access_token) {
+          localStorage.setItem('token', response.access_token);
+          localStorage.setItem('user', JSON.stringify(response.user));
+          navigate('/dashboard');
+        } else {
+          setInfo(response.message || 'Cuenta creada. Revisa tu correo o espera activación por un administrador.');
+          setIsLogin(true);
+          setFormData((f) => ({ ...f, password: '' }));
+        }
       }
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Error al procesar la solicitud. Revisa tus credenciales.');
+      const msg = err.response?.data?.message;
+      setError(Array.isArray(msg) ? msg.join(', ') : msg || 'Error al procesar la solicitud. Revisa tus credenciales.');
     } finally {
       setLoading(false);
     }
@@ -40,9 +69,10 @@ const Login: React.FC = () => {
   };
 
   const toggleMode = () => {
+    if (isLogin && !registrationOpen) return;
     setIsLogin(!isLogin);
     setError('');
-    // Reset form
+    setInfo('');
     setFormData({ name: '', email: '', password: '' });
   };
 
@@ -122,6 +152,17 @@ const Login: React.FC = () => {
                 <span>{error}</span>
               </motion.div>
             )}
+            {info && (
+              <motion.div
+                className="form-error"
+                style={{ borderColor: 'rgba(74,222,128,0.35)', background: 'rgba(74,222,128,0.08)', color: '#86efac' }}
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+              >
+                <span>{info}</span>
+              </motion.div>
+            )}
           </AnimatePresence>
 
           <form onSubmit={handleSubmit}>
@@ -196,12 +237,18 @@ const Login: React.FC = () => {
             </motion.button>
           </form>
 
-          <motion.div className="toggle-mode" variants={itemVariants}>
-            {isLogin ? '¿No tienes cuenta?' : '¿Ya tienes una cuenta?'}
-            <button type="button" onClick={toggleMode}>
-              {isLogin ? 'Regístrate aquí' : 'Inicia Sesión'}
-            </button>
-          </motion.div>
+          {registrationOpen ? (
+            <motion.div className="toggle-mode" variants={itemVariants}>
+              {isLogin ? '¿No tienes cuenta?' : '¿Ya tienes una cuenta?'}
+              <button type="button" onClick={toggleMode}>
+                {isLogin ? 'Regístrate aquí' : 'Inicia Sesión'}
+              </button>
+            </motion.div>
+          ) : (
+            <p className="toggle-mode" style={{ opacity: 0.65, fontSize: 14, marginTop: 8 }}>
+              El registro público está desactivado. Si necesitas acceso, un administrador debe crear tu cuenta.
+            </p>
+          )}
         </motion.div>
       </div>
     </motion.div>

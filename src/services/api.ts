@@ -23,6 +23,66 @@ export const loginAdmin = async (credentials: { email: string; password: string 
   return data;
 };
 
+export const getRegistrationOpen = async (): Promise<{ publicRegistrationEnabled: boolean }> => {
+  const { data } = await api.get('/auth/registration-open');
+  return data;
+};
+
+export const registerPublic = async (body: { email: string; password: string; name: string }) => {
+  const { data } = await api.post<{
+    access_token: string | null;
+    user: { id: string; email: string; name: string; role: string; artists: unknown[] };
+    message?: string;
+  }>('/auth/register', body);
+  return data;
+};
+
+export const changePassword = async (body: { currentPassword: string; newPassword: string }) => {
+  const { data } = await api.post<{ message: string }>('/auth/change-password', body);
+  return data;
+};
+
+export type AdminUser = {
+  id: string;
+  email: string;
+  name: string;
+  role: 'ADMIN' | 'MANAGER';
+  isActive: boolean;
+  createdAt: string;
+  artists: { id: string; slug: string; name: string }[];
+};
+
+export const getUsers = async (): Promise<AdminUser[]> => {
+  const { data } = await api.get('/users');
+  return data;
+};
+
+export const createUser = async (body: {
+  email: string;
+  password: string;
+  name: string;
+  role?: 'ADMIN' | 'MANAGER';
+  artistIds?: string[];
+}): Promise<AdminUser> => {
+  const { data } = await api.post('/users', body);
+  return data;
+};
+
+export const updateUser = async (
+  id: string,
+  body: {
+    email?: string;
+    password?: string;
+    name?: string;
+    role?: 'ADMIN' | 'MANAGER';
+    isActive?: boolean;
+    artistIds?: string[];
+  },
+): Promise<AdminUser> => {
+  const { data } = await api.patch(`/users/${id}`, body);
+  return data;
+};
+
 export const getArtists = async (): Promise<Artist[]> => {
   const { data } = await api.get('/artists');
   return data;
@@ -82,6 +142,16 @@ export const addSocial = async (slug: string, socialData: any): Promise<any> => 
 
 export const deleteSocial = async (slug: string, socialId: number): Promise<any> => {
   const { data } = await api.delete(`/artists/${slug}/socials/${socialId}`);
+  return data;
+};
+
+export const addGenre = async (slug: string, genreData: any): Promise<any> => {
+  const { data } = await api.post(`/artists/${slug}/genres`, genreData);
+  return data;
+};
+
+export const deleteGenre = async (slug: string, genreId: number): Promise<any> => {
+  const { data } = await api.delete(`/artists/${slug}/genres/${genreId}`);
   return data;
 };
 
